@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雾都夜话 · 全三章</title>
+<style>
+  :root{
+    --bg:#0d0f12;
+    --panel:#14171b;
+    --panel2:#1a1e23;
+    --line:#2a3038;
+    --text:#c9c3b4;
+    --text-dim:#8a857a;
+    --red:#b3261e;
+    --red-dim:#6d1c17;
+    --gold:#c8a24a;
+    --link:#6a9fb5;
+    --blood:#8a1f1f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+    font-size:15px;
+    line-height:1.75;
+    overflow-x:hidden;
+    background-image:
+      radial-gradient(ellipse at 50% -20%, rgba(138,31,31,.12), transparent 55%),
+      repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
+    background-attachment:fixed;
+  }
+  a{color:var(--link);text-decoration:none;cursor:pointer;}
+  a:hover{text-decoration:underline;}
+
+  #app{max-width:880px;margin:0 auto;padding:24px 18px 80px;position:relative;}
+
+  /* ===== 开场层 ===== */
+  #intro{
+    position:fixed;inset:0;z-index:100;
+    background:#050607;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;text-align:center;
+  }
+  #intro .box{max-width:560px;padding:40px;}
+  #intro .title{font-size:30px;letter-spacing:.35em;color:#d8d2c0;font-weight:700;}
+  #intro .sub{margin-top:18px;color:var(--text-dim);font-size:14px;letter-spacing:.15em;}
+  #intro .hint{margin-top:42px;color:#4d4a44;font-size:13px;letter-spacing:.3em;}
+  #intro.fade{opacity:0;transition:opacity 1.4s;pointer-events:none;}
+
+  /* ===== 论坛头部 ===== */
+  header{
+    border-bottom:1px solid var(--line);
+    padding:10px 4px 18px;margin-bottom:22px;
+  }
+  header .logo{font-size:26px;font-weight:700;letter-spacing:.3em;color:#ddd8c8;}
+  header .logo .red{color:var(--red);}
+  header .slogan{color:var(--text-dim);font-size:12px;letter-spacing:.2em;margin-top:6px;}
+  header .meta{color:#5a564d;font-size:12px;margin-top:14px;display:flex;gap:18px;flex-wrap:wrap;}
+  #metaNotice{color:var(--red);letter-spacing:.1em;}
+
+  .sec-title{
+    font-size:13px;color:var(--text-dim);letter-spacing:.25em;
+    margin:26px 0 10px;padding-left:10px;border-left:3px solid var(--red);
+  }
+
+  /* ===== 帖子列表 ===== */
+  .post-row{
+    display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+    padding:13px 14px;border:1px solid var(--line);background:var(--panel);
+    margin-bottom:8px;cursor:pointer;transition:border-color .2s, background .2s;
+  }
+  .post-row:hover{border-color:#3a434d;background:var(--panel2);}
+  .post-row .t{color:var(--link);font-size:15px;}
+  .post-row .tag{color:#5a564d;font-size:12px;white-space:nowrap;}
+  .post-row .auth{color:var(--text-dim);font-size:12px;white-space:nowrap;}
+  .post-row .mark{color:var(--red);font-size:11px;border:1px solid var(--red-dim);padding:0 5px;border-radius:2px;margin-left:auto;white-space:nowrap;}
+  .post-row.new{border-color:var(--red-dim);}
+
+  /* ===== 帖子详情 ===== */
+  #postDetail{margin-top:10px;}
+  .thread{
+    border:1px solid var(--line);background:var(--panel);
+    padding:22px 24px;margin-bottom:16px;
+  }
+  .thread h2{font-size:20px;color:#ded9c9;font-weight:700;line-height:1.5;margin-bottom:8px;}
+  .thread .by{color:var(--text-dim);font-size:12px;margin-bottom:18px;border-bottom:1px dashed var(--line);padding-bottom:12px;}
+  .thread .body p{margin-bottom:14px;text-align:justify;}
+  .thread .body .hl{color:var(--gold);}
+
+  .reply{
+    border:1px solid var(--line);background:var(--panel);
+    padding:16px 20px;margin-bottom:10px;
+  }
+  .reply .head{color:var(--text-dim);font-size:12px;margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+  .reply .head .name{color:var(--link);}
+  .reply .head .floor{color:#5a564d;}
+  .reply .body p{margin-bottom:10px;}
+  .reply.sys{background:var(--red-dim);border-color:var(--blood);color:#b89a94;font-size:13px;}
+
+  .ask-btn{
+    margin-top:10px;display:inline-block;
+    background:transparent;border:1px solid var(--red-dim);color:var(--red);
+    padding:5px 14px;font-size:13px;cursor:pointer;letter-spacing:.1em;
+    font-family:inherit;
+  }
+  .ask-btn:hover{background:var(--red);color:#0d0f12;}
+
+  .back-btn{
+    background:transparent;border:1px solid var(--line);color:var(--text-dim);
+    padding:6px 16px;font-size:13px;cursor:pointer;margin-top:16px;font-family:inherit;letter-spacing:.1em;
+  }
+  .back-btn:hover{color:var(--text);border-color:#3a434d;}
+
+  /* ===== 线索库 ===== */
+  #cluePanel{
+    position:fixed;right:14px;top:14px;width:250px;z-index:50;
+    background:var(--panel);border:1px solid var(--line);
+    padding:12px 14px;max-height:60vh;overflow:auto;
+  }
+  #cluePanel .cp-title{font-size:12px;color:var(--text-dim);letter-spacing:.25em;margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:6px;}
+  #cluePanel .clue{font-size:13px;padding:6px 0;border-bottom:1px dashed #23282f;color:#a8a294;}
+  #cluePanel .clue:last-child{border-bottom:none;}
+  #cluePanel .clue.new{color:var(--gold);}
+  #cluePanel .cp-empty{color:#5a564d;font-size:12px;}
+
+  /* ===== 对话弹窗 ===== */
+  #dialogue{
+    position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.82);
+    display:none;align-items:center;justify-content:center;padding:20px;
+  }
+  #dialogue.show{display:flex;}
+  #dlg-box{
+    width:520px;max-width:100%;max-height:82vh;overflow:auto;
+    background:var(--panel);border:1px solid var(--line);padding:26px 28px;
+  }
+  #dlg-box .dlg-name{color:var(--gold);font-size:13px;letter-spacing:.2em;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:10px;}
+  #dlg-body{min-height:120px;}
+  #dlg-body .say{margin-bottom:14px;text-align:justify;}
+  #dlg-options{margin-top:10px;}
+  .opt-btn{
+    display:block;width:100%;text-align:left;
+    background:transparent;border:1px solid var(--line);color:var(--text);
+    padding:10px 14px;margin-bottom:8px;cursor:pointer;font-size:14px;font-family:inherit;
+    transition:border-color .15s, background .15s;
+  }
+  .opt-btn:hover{border-color:var(--red-dim);background:var(--panel2);color:var(--gold);}
+  .dlg-close{display:block;margin:14px auto 0;background:transparent;border:1px solid var(--line);color:var(--text-dim);padding:6px 20px;cursor:pointer;font-size:13px;font-family:inherit;}
+
+  /* ===== 关键词输入 ===== */
+  #puzzleBar{
+    margin:20px 0;padding:18px 20px;border:1px solid var(--blood);
+    background:linear-gradient(180deg, rgba(138,31,31,.15), rgba(138,31,31,.05));
+  }
+  #puzzleBar .u-title{color:var(--red);font-size:14px;letter-spacing:.1em;margin-bottom:12px;}
+  #puzzleBar .u-sub{color:var(--text-dim);font-size:12px;margin-bottom:12px;}
+  #puzzleBar input{
+    width:100%;background:#0a0c0e;border:1px solid var(--line);color:var(--text);
+    padding:9px 12px;font-size:15px;font-family:inherit;letter-spacing:.1em;
+  }
+  #puzzleBar input:focus{outline:none;border-color:var(--red);}
+  #puzzleBar .u-msg{margin-top:10px;font-size:13px;color:var(--gold);min-height:20px;}
+  #puzzleBar .u-msg.err{color:var(--red);}
+
+  /* ===== 结局屏 ===== */
+  #ending{
+    position:fixed;inset:0;z-index:90;background:#050607;
+    display:none;align-items:center;justify-content:center;text-align:center;padding:30px;
+  }
+  #ending.show{display:flex;}
+  #ending .e-box{max-width:640px;max-height:86vh;overflow:auto;}
+  #ending .e-title{font-size:22px;color:var(--gold);letter-spacing:.3em;margin-bottom:24px;}
+  #ending .e-title.flicker{animation:flicker 3s infinite;}
+  #ending .e-body{color:var(--text);text-align:left;}
+  #ending .e-body p{margin-bottom:14px;}
+  #ending .e-body .red{color:var(--red);}
+  #ending .e-btn{
+    margin:26px 8px 0;background:transparent;border:1px solid var(--red-dim);color:var(--red);
+    padding:8px 26px;cursor:pointer;font-size:14px;letter-spacing:.2em;font-family:inherit;
+  }
+  #ending .e-btn:hover{background:var(--red);color:#0d0f12;}
+  @keyframes flicker{
+    0%,100%{opacity:1;}
+    92%{opacity:1;}
+    93%{opacity:.3;}
+    94%{opacity:1;}
+    96%{opacity:.5;}
+    97%{opacity:1;}
+  }
+
+  @media (max-width:760px){
+    #cluePanel{position:static;width:auto;margin-top:20px;max-height:none;}
+  }
+</style>
+</head>
+<body>
+
+<div id="intro">
+  <div class="box">
+    <div class="title">雾 都 夜 话</div>
+    <div class="sub">—— 夜深了，你本只想刷会儿手机，手指却点开了那个很多年没上的论坛。</div>
+    <div class="hint">（ 点 击 进 入 ）</div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <div class="logo">雾都<span class="red">夜话</span></div>
+    <div class="slogan">山城·雾都 城市论坛 —— 只谈风月，不谈鬼神（信则有，不信则无）</div>
+    <div class="meta">
+      <span>在线人数：3</span>
+      <span>今日新帖：0</span>
+      <span>当前时间：2006-07-07 03:14</span>
+      <span id="metaNotice"></span>
+    </div>
+  </header>
+
+  <div class="sec-title">帖子列表</div>
+  <div id="postList"></div>
+
+  <div id="postDetail"></div>
+
+  <div class="sec-title" style="margin-top:34px;">我的线索</div>
+  <div id="cluePanel">
+    <div class="cp-title">▍ 线索库</div>
+    <div id="clueList" class="cp-empty">你还没有收集到任何线索。</div>
+  </div>
+</div>
+
+<!-- 对话弹窗 -->
+<div id="dialogue">
+  <div id="dlg-box">
+    <div class="dlg-name" id="dlgName"></div>
+    <div id="dlg-body"></div>
+  </div>
+</div>
+
+<!-- 结局屏 -->
+<div id="ending">
+  <div class="e-box">
+    <div class="e-title" id="endingTitle"></div>
+    <div class="e-body" id="endingBody"></div>
+    <div id="endingBtns"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   打字机
+   ============================================================ */
+const TYPE_SPEED = 8; // 毫秒/字，越小越快
+
+function esc(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+const $ = s => document.querySelector(s);
+
+function typeText(el, html, done){
+  const div = document.createElement('div');
+  div.className = 'say';
+  el.appendChild(div);
+  let idx = 0, skipped = false;
+  function finish(){
+    if(skipped) return;
+    skipped = true;
+    div.innerHTML = html;
+    done && done();
+  }
+  function tick(){
+    if(skipped) return;
+    if(idx <= html.length){
+      div.innerHTML = html.slice(0, idx) + '<span style="color:var(--red)">▌</span>';
+      idx++;
+      setTimeout(tick, TYPE_SPEED);
+    } else {
+      div.innerHTML = html;
+      done && done();
+    }
+  }
+  setTimeout(tick, TYPE_SPEED);
+  div.addEventListener('click', finish);
+}
+
+/* ============================================================
+   数据层：剧情全部集中在这里，改剧情只改这一段
+   ============================================================ */
+
+/* 帖子：stage 表示第几章出现；gated 表示要靠关键词解锁 */
+const POSTS = [
+  {
+    id:'p0', stage:1,
+    title:'【记录】十二年前开眼的小满，我好像又看到他了',
+    author:'半夜数窗', time:'2006-07-07 03:14', mark:'火',
+    body:[
+      '睡不着。',
+      '翻硬盘里的旧东西，翻到一段十二年前的录像，是「开眼神童」小满在百货大楼门口表演的现场。那时候雾都人人都知道他：一个七岁的孩子，额头上被人点开了一只「眼」，能看见别人看不见的东西，能替人问死去的亲人，能在台上说出你口袋里装着什么。',
+      '录像最后三秒，人群散去的街角，站着一个人。我把画面放大，那个人和小满长得一模一样——不，就是成年后的小满。',
+      '可小满十二年前就死了。死在七月初七，百货大楼楼顶。',
+      '我截图，再放大。那个人的额头上……<span class="hl">也有第三只眼。</span>',
+      '我睡不着了。有没有人，还记得这件事？'
+    ],
+    puzzle:{
+      unlock:'p3', requires:'c_name', answers:['陈明生'],
+      title:'私信给「那个不存在的ID」', sub:'输入你知道的那个名字。',
+      success:'私信已发送。对方不在线，但消息状态变成了——「已读」。',
+      fail:'私信发出去了，但没有回音。或许……你记错了名字？',
+      sysReply:'▍检测到被归档的帖子被重新启用：【封存】那天晚上，楼顶不止一个人'
+    },
+    replies:[
+      {author:'老山城', floor:'2楼', time:'03:20', npc:'laoshancheng',
+       text:'楼主别自己吓自己。当年那套全是骗人的。什么开眼、通灵，都是他师父白先生找来配的戏，连观众里都有托。我亲眼在后台见过他们对词儿。人一死，戏就没人戳穿了。'},
+      {author:'雾中客', floor:'3楼', time:'03:26',
+       text:'七月初七？楼主你怕不是记岔了。七月七是七夕，不是头七。你大半夜拿一段糊录像说人没死，这帖怕是要火。'},
+      {author:'记者老周', floor:'4楼', time:'03:41', npc:'zhou',
+       text:'我是当年跟过这条报道的记者。人死为大，别翻这些陈年旧事了。有些门，不该敲，有些灯，不该点。到此为止吧。'},
+      {author:'系统', floor:'', time:'03:55', sys:true,
+       text:'▍该帖因「疑似含不实信息」被论坛暂存。部分回复不可见。雾都夜话管理组'}
+    ]
+  },
+  {
+    id:'p1', stage:1,
+    title:'【闲聊】今晚的雾特别大，大桥那头什么都看不见',
+    author:'摆渡人', time:'2006-07-07 02:47',
+    body:['雾太大了，像一堵墙。开车过桥的时候，后视镜里总觉得多坐了一个人。','到家了，不敢回头看。'],
+    replies:[]
+  },
+  {
+    id:'p1b', stage:1,
+    title:'【提醒】最近半夜总有人顶起旧帖，管理员都不管吗',
+    author:'匿名', time:'2006-07-06 23:58',
+    body:['连着好几晚，一到三点多，就有人把一些十年前的帖子顶上来，点进去又都是空的。','今天半夜，我也被顶起来了。可我根本没发过那个帖。'],
+    replies:[]
+  },
+  {
+    id:'p2', stage:2, grantClue:'c_baobao',
+    title:'【求助】还有谁记得百货大楼那场「开眼大会」？',
+    author:'匿名', time:'2006-07-07 01:55', mark:'已恢复',
+    body:[
+      '当年那场「开眼大会」，我也去了。散场后，我在后台门口捡到一张白先生落下的名片。',
+      '上面除了「白先生」三个字，还印着一行小字——<span class="hl">白鹤鸣</span>。',
+      '我当时把它烧了。因为总觉得，烧了它，那孩子的事就跟我没关系了。',
+      '可今晚，它又出现在我书桌上，字是反着印的。'
+    ],
+    replies:[]
+  },
+  {
+    id:'p3', gated:true,
+    title:'【封存】那天晚上，楼顶不止一个人',
+    author:'不存在的ID', time:'？？？？', mark:'封存',
+    body:[
+      '你找到我了。也对——你念出了那个名字。',
+      '我告诉你一件事：七月初七那天晚上，百货大楼楼顶，站着的不是小满一个人。',
+      '白先生在那儿。还有……我。',
+      '那年我也七岁，是小满最好的玩伴。他上台「通灵」，我在后台递东西。他其实一点都不想演。他说，等攒够了钱，白先生就放我们走。',
+      '那天晚上，他偷偷爬上楼顶，是想逃。',
+      '我看着他爬上栏杆，然后……有人从后面，<span class="hl">推了他一把。</span>',
+      '我没有喊。我跑了。',
+      '十二年，我每天夜里都数窗子，数到天亮。',
+      '所以你别问我录像里那个人是谁——那个人，是我回来赎罪的。',
+      '——你是第三个念出这个名字的人。<span class="hl">前两个，都出事了。</span>'
+    ],
+    replies:[]
+  },
+  {
+    id:'p4', stage:2,
+    title:'【曝光】有人重新整理了十二年前的旧报纸，发现两处不对劲',
+    author:'纸上的雾', time:'2006-07-08 00:12', mark:'新',
+    body:[
+      '看了楼主那帖，我去翻了我爷爷留下的旧报纸，越看越不对。',
+      '2001年7月8日的《雾都晚报》头版，标题是《神童小满百货大楼坠亡，警方认定为意外失足》。可同一期报纸的第二版，登着一条寻人启事——找的正是小满的师父白鹤鸣，说白鹤鸣「自7月7日晚失踪，随身带走了大量现金」。',
+      '一个孩子头一天晚上坠亡，第二天师父就「失踪」了，报纸却写成「意外」。',
+      '更怪的是——那个署名记者「老周」，在三天后的另一篇报道里又写「经查，现场无目击者」。可我爷爷当年就在现场附近摆摊，他说，那晚明明有孩子指认过。'
+    ],
+    puzzle:{
+      unlock:'p5', requires:'c_baobao', answers:['白鹤鸣'],
+      title:'打开被封存的档案', sub:'输入那个人的本名。',
+      success:'档案柜的锁，咔哒一声，自己开了。',
+      fail:'没有反应。或许……你记错了名字？',
+      sysReply:'▍检测到新的档案被解密：【档案】雾都市局刑侦档案 · 摘录'
+    },
+    replies:[
+      {author:'纸上的雾', floor:'2楼', time:'00:20', npc:'zhi',
+       text:'我把报纸扫描好了。有些东西，纸是包不住火的。要问的，私信我。'},
+      {author:'老山城', floor:'3楼', time:'00:31', npc:'laoshancheng', npcNode:'ch2',
+       text:'白鹤鸣……这名字我可太熟了。就是他，出事后跑得比谁都快。'},
+      {author:'记者老周', floor:'4楼', time:'00:47', npc:'zhou', npcNode:'ch2',
+       text:'你们……够了没有？人都死了十二年了，还翻出来做什么？'}
+    ]
+  },
+  {
+    id:'p5', gated:true,
+    title:'【档案】雾都市局刑侦档案 · 摘录（涉密）',
+    author:'归档员', time:'2001-07-10', mark:'解密',
+    body:[
+      '—— 证人笔录 · 摘录 ——',
+      '问：7月7日晚，你在何处？',
+      '答：百货大楼后巷，摆摊卖夜宵。',
+      '问：你看见了什么？',
+      '答：我听见楼顶有人喊「别过来」，抬头看见一个大人把一个小孩往栏杆外推。我喊了一声，那大人回头看我。我认得，是「白先生」白鹤鸣，那孩子的师父。',
+      '问：为何当年这份笔录未被采纳？',
+      '答：（沉默）上级指示，此案以意外结案，<span class="hl">证人证词作废。</span>',
+      '—— 这份笔录，本该在十二年前，就结束这个案子。'
+    ],
+    replies:[]
+  },
+  {
+    id:'p6', stage:3,
+    title:'【私信】一条来自空号的消息',
+    author:'（无）', time:'2006-07-08 04:44', mark:'未读',
+    body:[
+      '我知道你会看到这里。',
+      '你刚才念了「白鹤鸣」。现在，轮到我念你的名字了。……算了，你的名字不重要。你是第四个。',
+      '第一个念出「陈明生」的，是白鹤鸣。他昨晚死了，死在自家浴缸里。法医会说他是溺死——只有他自己知道，是我站在他身后，按着他的后脑勺。',
+      '第二个，是记者老周。你刚才还跟他聊过。现在，他家的灯灭了。他会睡得很好，睡很久。',
+      '第三个，是那个帖子的楼主「半夜数窗」。他以为自己是个回来赎罪的目击者。对，他是。可赎罪没有用——他当时没有喊，就是没有喊。',
+      '现在，第四个，是你。你没有杀我。可你刚才看着、刷着、就是不说话——和十二年前楼底下那些人，一模一样。',
+      '你还要继续查吗？还是说——你已经听见了，<span class="hl">敲门声。</span>'
+    ],
+    replies:[]
+  }
+];
+
+/* 可追问的 NPC 对话树 */
+const NPCS = {
+  laoshancheng:{
+    name:'老山城 · 当年的围观者',
+    nodes:{
+      start:{
+        say:['你问小满？那孩子……唉，都是命。当年雾都谁没看过他台上那套。'],
+        opts:[
+          {t:'神童的本事，是真是假？', next:'truth'},
+          {t:'白先生是什么人？', next:'bai'},
+          {t:'七月初七那天晚上，到底发生了什么？', next:'night'}
+        ]
+      },
+      truth:{
+        say:['假的，全是假的。白先生雇人演「观众」，小满在台上装神弄鬼，后台早就对好了词。我那时在百货大楼看后门，天天听他们排练。'],
+        addClue:'c_fraud',
+        opts:[
+          {t:'那录像里的成年小满，怎么解释？', next:'video'},
+          {t:'白先生现在在哪？', next:'bai'}
+        ]
+      },
+      video:{
+        say:['录像？你问我录像里的人是谁，我还想问你呢。人死了就是死了，别自己吓自己。你要是真睡不着，就去查查那孩子到底叫什么。'],
+        opts:[
+          {t:'他叫什么？', next:'bai'}
+        ]
+      },
+      bai:{
+        say:['白先生？那畜生早跑了。出了事第二天人就没了，卷走了所有香火钱。他给小满起艺名，图个「小满小满，功德圆满」的吉利，其实就是为了藏本名，怕人查。'],
+        addClue:'c_name',
+        opts:[
+          {t:'所以「小满」不是本名？', next:'name'}
+        ]
+      },
+      name:{
+        say:['对。那孩子户口本上的本名，叫<span class="hl">陈明生</span>。明生，明生，「明明可以生」。你现在知道这个名字，可别到处说。'],
+        opts:[
+          {t:'……我知道了。', next:null}
+        ]
+      },
+      night:{
+        say:['七月初七那晚，我在楼顶下头看热闹，听见上头有人喊……后来就乱成一团。警察说是失足。可那天风不大，栏杆也高，一个七岁的孩子，怎么翻得过去？'],
+        addClue:'c_night',
+        opts:[
+          {t:'你怀疑不是失足？', next:'doubt'}
+        ]
+      },
+      doubt:{
+        say:['这话我可没说过。行了，年轻人，有些话点到为止。你要真想弄明白，去问问当年那个写报道的记者，他比我知道得多。'],
+        opts:[
+          {t:'谢谢，我知道了。', next:null}
+        ]
+      },
+      ch2:{
+        say:['白鹤鸣。这名字，我一听就牙痒。他出事后改头换面，这些年在外面还是用「白先生」的名号行骗。你们要抓他，可得快。'],
+        opts:[
+          {t:'你还知道他什么？', next:'ch2b'}
+        ]
+      },
+      ch2b:{
+        say:['我只知道他跑之前，跟那个记者老周喝过一顿酒。第二天，报道就出来了——「失足」。你品，你细品。'],
+        opts:[
+          {t:'……我明白了。', next:null}
+        ]
+      }
+    }
+  },
+  zhou:{
+    name:'记者老周 · 当年报道过此案',
+    nodes:{
+      start:{
+        say:['……你又来问这个。年轻人，有些旧案，结了就结了。你把它刨开，土里的东西会咬人。'],
+        opts:[
+          {t:'你当年到底看到了什么？', next:'see'},
+          {t:'你是不是在怕什么？', next:'fear'}
+        ]
+      },
+      see:{
+        say:['我什么也没看到。我只写了警方通报的那几个字：失足、坠楼、不幸身亡。报道发出去，就跟我没关系了。'],
+        opts:[
+          {t:'那晚楼顶，真的只有他一个人吗？', next:'top'}
+        ]
+      },
+      top:{
+        say:[
+          '你……你听谁说的？',
+          '那天晚上，他根本不该出现在楼顶！那个点，他应该……应该……',
+          '算了。我不该说。你记住：有些人，有些名字，你别去念，别去查。就当那孩子是真「通灵」，去给阎王当差了。'
+        ],
+        addClue:'c_zhou',
+        opts:[
+          {t:'（他明显还知道更多，但不愿再开口了。）', next:null}
+        ]
+      },
+      fear:{
+        say:['怕？我这一行，什么没见过。我只是……老了，夜里睡不好，总梦见楼顶有个孩子，喊我「周叔叔，你倒是说句话啊」。'],
+        addClue:'c_dream',
+        opts:[
+          {t:'……多谢。', next:null}
+        ]
+      },
+      ch2:{
+        say:[
+          '你还没完？……好。你想知道，我就告诉你。',
+          '那天晚上我就在楼下。白鹤鸣跑下来，喘着气，塞给我一沓钱，全是汗。他说：「周哥，那孩子自己摔的，你帮我把报道写漂亮点。」'
+        ],
+        addClue:'c_push',
+        opts:[
+          {t:'那孩子根本不是自己摔的，对吗？', next:'ch2b'}
+        ]
+      },
+      ch2b:{
+        say:['对。我看见了。白鹤鸣是从楼顶跑下来的，他手上……有血。可我能怎么办？我写了「失足」。然后白鹤鸣就「失踪」了。这十二年，我写报道再也没敢署名。'],
+        addClue:'c_bribe',
+        opts:[
+          {t:'你为什么现在肯说了？', next:'ch2c'}
+        ]
+      },
+      ch2c:{
+        say:['因为那个帖子。因为录像里那个人。那孩子……回来了。他要是回来，第一个找的不是你，是我。','……你自己保重。'],
+        opts:[
+          {t:'（他说完就下线了，头像灰了。）', next:null}
+        ]
+      }
+    }
+  },
+  zhi:{
+    name:'纸上的雾 · 整理旧档案的人',
+    nodes:{
+      start:{
+        say:['你是被楼主那帖引来的？我整理档案十年，就这桩案子，卷宗里缺了三页。'],
+        opts:[
+          {t:'缺了哪三页？', next:'pages'},
+          {t:'白鹤鸣是什么人？', next:'bai'},
+          {t:'那个记者老周，你查过吗？', next:'zhou'}
+        ]
+      },
+      pages:{
+        say:['缺的是「现场勘验」三页。一个坠楼的案子，最要紧的三页没了。你说，是谁抽走的？'],
+        addClue:'c_police',
+        opts:[
+          {t:'……这件事，比我想的深。', next:null}
+        ]
+      },
+      bai:{
+        say:['白鹤鸣，就是你们说的「白先生」。他本名白鹤鸣，出事后改名换姓，这些年还在用「白先生」的名号在外地行骗。这名字，你记好。'],
+        addClue:'c_baobao',
+        opts:[
+          {t:'白鹤鸣……我记住了。', next:null}
+        ]
+      },
+      zhou:{
+        say:['老周？他当年报道过这案子，之后升得很快。我查到，出事后一个月，他老婆名下多了一套房。'],
+        addClue:'c_bribe',
+        opts:[
+          {t:'（收钱办事的，不止他一个吧。）', next:null}
+        ]
+      }
+    }
+  }
+};
+
+const CLUES = {
+  c_fraud:'「开眼神童」是骗局：白先生雇托、后台对词，小满只是道具。',
+  c_name:'神童本名「陈明生」，「小满」是白先生起的艺名，用来藏真名。',
+  c_night:'七月初七当夜，一个七岁孩子「失足」翻过了高高的栏杆，疑点重重。',
+  c_zhou:'记者老周说漏嘴：那晚，小满「本不该出现在楼顶」。',
+  c_dream:'老周反复梦见楼顶有个孩子，喊他「周叔叔，你倒是说句话啊」。',
+  c_baobao:'「白先生」本名「白鹤鸣」，出事后改名换姓，仍在行骗。',
+  c_police:'案卷缺了「现场勘验」三页——最要紧的物证被人抽走了。',
+  c_bribe:'记者老周收了白鹤鸣的钱，把谋杀写成了「失足」。',
+  c_push:'白鹤鸣当晚从楼顶跑下，手上有血，塞给老周一沓沾汗的钱。'
+};
+
+/* 结局文案 */
+const ENDINGS = {
+  1:{
+    title:'真相 · 1 / 3',
+    body:[
+      '<p>第一层真相已拼合：<span class="red">「开眼神童」显灵，是一场骗局。</span></p>',
+      '<p>七岁的陈明生，被师父白鹤鸣当作通灵的「道具」；七月初七那晚，他爬上楼顶想逃，却被人推了下去——<span class="red">不是失足。</span></p>',
+      '<p>而发帖的「半夜数窗」，就是当年那个在场的孩子。十二年来，他夜夜数窗到天亮。</p>',
+      '<p>可还有更多问题没有答案：推人的是谁？白鹤鸣为什么没被抓？</p>'
+    ]
+  },
+  2:{
+    title:'真相 · 2 / 3',
+    body:[
+      '<p>第二层真相已拼合：<span class="red">推人的，就是师父白鹤鸣。</span></p>',
+      '<p>他当晚从楼顶跑下，手上带血，用一沓沾汗的钱收买了记者老周。老周把「谋杀」写成了「失足」。</p>',
+      '<p>而案卷里最要紧的「现场勘验」三页，不翼而飞。<span class="red">这案子，是被按下去的。</span></p>',
+      '<p>你离真相只差一步了。可这一步，你确定还要往前走吗？</p>'
+    ]
+  },
+  3:{
+    title:'真相 · 3 / 3',
+    body:[
+      '<p>最后一层真相，你自己也猜到了吧：<span class="red">这些恶，真的召回了小满。</span></p>',
+      '<p>你以为你是在追查真相。其实是「他」一路引着你，念出一个又一个名字。</p>',
+      '<p>白鹤鸣、老周、楼主——他们都念过。现在，第四个，是你。</p>',
+      '<p style="color:var(--red);letter-spacing:.2em;">……滴答。滴答。有人在敲你的门。你回头了吗？</p>'
+    ]
+  }
+};
+
+/* ============================================================
+   状态层
+   ============================================================ */
+const state = {
+  clues:[],
+  newClues:[],
+  npcNode:{ laoshancheng:'start', zhou:'start', zhi:'start' },
+  unlocked:{ p3:false, p5:false },
+  stage:1
+};
+
+function isVisible(p){
+  if(p.gated) return !!state.unlocked[p.id];
+  return state.stage >= (p.stage || 1);
+}
+
+/* ============================================================
+   渲染：帖子列表
+   ============================================================ */
+function renderList(){
+  const el = $('#postList');
+  const visible = POSTS.filter(isVisible);
+  el.innerHTML = visible.map(p => {
+    const mark = p.mark ? `<span class="mark">${esc(p.mark)}</span>` : '';
+    return `<div class="post-row" data-id="${p.id}">
+      <span class="t">${esc(p.title)}</span>
+      <span class="auth">${esc(p.author)}</span>
+      <span class="tag">${esc(p.time)}</span>
+      ${mark}
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.post-row').forEach(row => {
+    row.addEventListener('click', () => openPost(row.dataset.id));
+  });
+}
+
+/* ============================================================
+   渲染：帖子详情
+   ============================================================ */
+function openPost(id){
+  const p = POSTS.find(x => x.id === id);
+  if(!p) return;
+
+  if(p.grantClue && !state.clues.includes(p.grantClue)){
+    state.clues.push(p.grantClue);
+    state.newClues.push(p.grantClue);
+  }
+  renderClues();
+
+  const detail = $('#postDetail');
+  const repliesHtml = (p.replies || []).map(r => {
+    if(r.sys){
+      return `<div class="reply sys"><div class="head">${esc(r.author)} · ${esc(r.time)}</div>
+        <div class="body"><p>${r.text}</p></div></div>`;
+    }
+    const askBtn = r.npc ? `<button class="ask-btn" data-npc="${r.npc}" data-node="${r.npcNode || ''}">私信追问：${esc(r.author)}</button>` : '';
+    return `<div class="reply">
+      <div class="head"><span class="name">${esc(r.author)}</span><span class="floor">${esc(r.floor)}</span><span>${esc(r.time)}</span></div>
+      <div class="body"><p>${r.text}</p></div>
+      ${askBtn}
+    </div>`;
+  }).join('');
+
+  const puzzleHtml = renderPuzzle(p);
+
+  detail.innerHTML = `
+    <div class="thread">
+      <h2>${esc(p.title)}</h2>
+      <div class="by">作者：${esc(p.author)} · ${esc(p.time)}</div>
+      <div class="body" id="threadBody"></div>
+      ${puzzleHtml}
+    </div>
+    <div class="reply-list">${repliesHtml}</div>
+    <button class="back-btn" onclick="renderForum()">← 返回帖子列表</button>
+  `;
+
+  // 逐段打字正文
+  const tb = $('#threadBody');
+  let i = 0;
+  function nextPara(){
+    if(i < p.body.length){
+      typeText(tb, p.body[i], nextPara);
+      i++;
+    } else {
+      onBodyDone(p);
+    }
+  }
+  nextPara();
+
+  // 绑定追问按钮
+  detail.querySelectorAll('.ask-btn').forEach(b => {
+    b.addEventListener('click', () => openDialogue(b.dataset.npc, b.dataset.node || null));
+  });
+
+  // 绑定谜题输入
+  const bar = detail.querySelector('#puzzleBar');
+  if(bar){
+    const input = bar.querySelector('input');
+    input.addEventListener('keydown', e => { if(e.key === 'Enter') submitPuzzle(p.id); });
+  }
+}
+
+/* 正文读完后的收尾（触发结局） */
+function onBodyDone(p){
+  if(p.id === 'p3' && state.stage < 2){ showEnding(1); }
+  else if(p.id === 'p5' && state.stage < 3){ showEnding(2); }
+  else if(p.id === 'p6'){ showEnding(3); }
+}
+
+/* 关键词谜题：若该帖有谜题、且所需线索已集齐、且目标尚未解锁，则显示输入框 */
+function renderPuzzle(p){
+  if(!p.puzzle) return '';
+  const pz = p.puzzle;
+  const ready = state.clues.includes(pz.requires);
+  const done = !!state.unlocked[pz.unlock];
+  if(!ready || done) return '';
+  return `<div id="puzzleBar">
+    <div class="u-title">▍ ${pz.title}</div>
+    <div class="u-sub">${pz.sub}</div>
+    <input placeholder="____" maxlength="10">
+    <div class="u-msg"></div>
+  </div>`;
+}
+
+function submitPuzzle(postId){
+  const p = POSTS.find(x => x.id === postId);
+  const pz = p.puzzle;
+  const bar = document.querySelector('#puzzleBar');
+  const input = bar.querySelector('input');
+  const msg = bar.querySelector('.u-msg');
+  const val = (input.value || '').replace(/\s+/g, '');
+  if(!val) return;
+  if(pz.answers.includes(val)){
+    state.unlocked[pz.unlock] = true;
+    msg.className = 'u-msg';
+    msg.textContent = pz.success;
+    const sysReply = document.createElement('div');
+    sysReply.className = 'reply sys';
+    sysReply.innerHTML = `<div class="head">系统</div><div class="body"><p>${pz.sysReply}</p></div>`;
+    const list = document.querySelector('#postDetail .reply-list');
+    list.insertBefore(sysReply, list.firstChild);
+    setTimeout(renderList, 1200);
+  } else {
+    msg.className = 'u-msg err';
+    msg.textContent = pz.fail;
+  }
+}
+
+/* ============================================================
+   对话弹窗
+   ============================================================ */
+function openDialogue(npcId, nodeOverride){
+  const npc = NPCS[npcId];
+  if(!npc) return;
+  $('#dialogue').classList.add('show');
+  $('#dlgName').textContent = '私信 · ' + npc.name;
+  const startNode = nodeOverride || state.npcNode[npcId] || 'start';
+  renderDialogue(npcId, startNode);
+}
+
+function renderDialogue(npcId, nodeId){
+  const npc = NPCS[npcId];
+  const node = npc.nodes[nodeId];
+  if(!node) return;
+  const body = $('#dlg-body');
+  body.innerHTML = '';
+
+  if(node.addClue && !state.clues.includes(node.addClue)){
+    state.clues.push(node.addClue);
+    state.newClues.push(node.addClue);
+  }
+  renderClues();
+
+  let i = 0;
+  function nextSay(){
+    if(i < node.say.length){
+      typeText(body, node.say[i], nextSay);
+      i++;
+    } else {
+      renderOptions(npcId, node);
+    }
+  }
+  nextSay();
+}
+
+function renderOptions(npcId, node){
+  const body = $('#dlg-body');
+  if(!node.opts || node.opts.length === 0){
+    body.innerHTML += `<button class="dlg-close" onclick="closeDialogue()">（ 结 束 对 话 ）</button>`;
+    return;
+  }
+  const optsBox = document.createElement('div');
+  optsBox.id = 'dlg-options';
+  optsBox.innerHTML = node.opts.map((o,i) =>
+    `<button class="opt-btn" data-i="${i}">${esc(o.t)}</button>`).join('');
+  body.appendChild(optsBox);
+
+  optsBox.querySelectorAll('.opt-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const o = node.opts[+b.dataset.i];
+      if(o.next){
+        state.npcNode[npcId] = o.next;
+        renderDialogue(npcId, o.next);
+      } else {
+        closeDialogue();
+      }
+    });
+  });
+}
+
+function closeDialogue(){
+  $('#dialogue').classList.remove('show');
+  $('#dlg-body').innerHTML = '';
+}
+
+/* ============================================================
+   线索库
+   ============================================================ */
+function renderClues(){
+  const el = $('#clueList');
+  if(state.clues.length === 0){
+    el.className = 'cp-empty';
+    el.textContent = '你还没有收集到任何线索。';
+    return;
+  }
+  el.className = '';
+  el.innerHTML = state.clues.map(id => {
+    const isNew = state.newClues.includes(id);
+    return `<div class="clue ${isNew?'new':''}">▸ ${CLUES[id]}</div>`;
+  }).join('');
+  if(state.newClues.length){
+    setTimeout(()=>{ state.newClues = []; renderClues(); }, 3000);
+  }
+}
+
+/* ============================================================
+   结局屏
+   ============================================================ */
+function showEnding(stage){
+  const e = ENDINGS[stage];
+  $('#endingTitle').textContent = e.title;
+  $('#endingTitle').classList.toggle('flicker', stage === 3);
+  $('#endingBody').innerHTML = e.body.join('');
+  const btns = $('#endingBtns');
+  if(stage < 3){
+    btns.innerHTML = `
+      <button class="e-btn" id="btnContinue">继续追查 →</button>
+      <button class="e-btn" onclick="location.reload()">重新开始</button>`;
+    $('#btnContinue').addEventListener('click', () => continueStage(stage));
+  } else {
+    btns.innerHTML = `<button class="e-btn" onclick="location.reload()">重 新 开 始</button>`;
+  }
+  $('#ending').classList.add('show');
+}
+
+function continueStage(stage){
+  $('#ending').classList.remove('show');
+  state.stage = Math.max(state.stage, stage + 1);
+  renderForum();
+  $('#metaNotice').textContent = state.stage === 2 ? '▍ 检测到新帖子' : '▍ 论坛里，多了一条空号发来的消息';
+}
+
+/* ============================================================
+   主流程
+   ============================================================ */
+function renderForum(){
+  $('#postDetail').innerHTML = '';
+  renderList();
+}
+
+$('#intro').addEventListener('click', function(){
+  if(state.started) return;
+  state.started = true;
+  this.classList.add('fade');
+  setTimeout(()=> this.remove(), 1400);
+  renderList();
+});
+
+renderList();
+</script>
+</body>
+</html>
