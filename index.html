@@ -78,6 +78,8 @@
   .post-row .auth{color:var(--text-dim);font-size:12px;white-space:nowrap;}
   .post-row .mark{color:var(--red);font-size:11px;border:1px solid var(--red-dim);padding:0 5px;border-radius:2px;margin-left:auto;white-space:nowrap;}
   .post-row.new{border-color:var(--red-dim);}
+  .post-row.active{border-color:var(--red);background:var(--panel2);}
+  .post-row.active .t{color:var(--gold);}
 
   /* ===== 帖子详情 ===== */
   #postDetail{margin-top:10px;}
@@ -147,7 +149,16 @@
     transition:border-color .15s, background .15s;
   }
   .opt-btn:hover{border-color:var(--red-dim);background:var(--panel2);color:var(--gold);}
+  .opt-btn.chosen{color:var(--text-dim);}
   .dlg-close{display:block;margin:14px auto 0;background:transparent;border:1px solid var(--line);color:var(--text-dim);padding:6px 20px;cursor:pointer;font-size:13px;font-family:inherit;}
+  #dlg-box{position:relative;}
+  #dlgName{padding-right:34px;}
+  #dlgX{
+    position:absolute;top:10px;right:12px;
+    background:transparent;border:none;color:var(--text-dim);
+    font-size:26px;line-height:1;cursor:pointer;padding:0 4px;font-family:inherit;
+  }
+  #dlgX:hover{color:var(--red);}
 
   /* ===== 关键词输入 ===== */
   #puzzleBar{
@@ -232,6 +243,7 @@
 <!-- 对话弹窗 -->
 <div id="dialogue">
   <div id="dlg-box">
+    <button id="dlgX" title="退出对话" onclick="closeDialogue()">×</button>
     <div class="dlg-name" id="dlgName"></div>
     <div id="dlg-body"></div>
   </div>
@@ -632,9 +644,13 @@ const ENDINGS = {
 const state = {
   clues:[],
   newClues:[],
-  npcNode:{ laoshancheng:'start', zhou:'start', zhi:'start' },
+  visited:{},       // 各 NPC 已看过的对话节点（再次进入时直接显示，不再打字机）
+  chosenOpts:{},    // 已点过的选项（隐藏点过的那一条，另一条路保留）
   unlocked:{ p3:false, p5:false },
-  stage:1
+  stage:1,
+  openPost:null,   // 当前展开的帖子 id，null 表示未展开
+  typed:{},        // 已读过的帖子 id（再次展开时不再打字机）
+  finalShown:false
 };
 
 function isVisible(p){
@@ -650,7 +666,8 @@ function renderList(){
   const visible = POSTS.filter(isVisible);
   el.innerHTML = visible.map(p => {
     const mark = p.mark ? `<span class="mark">${esc(p.mark)}</span>` : '';
-    return `<div class="post-row" data-id="${p.id}">
+    const active = state.openPost === p.id ? ' active' : '';
+    return `<div class="post-row${active}" data-id="${p.id}">
       <span class="t">${esc(p.title)}</span>
       <span class="auth">${esc(p.author)}</span>
       <span class="tag">${esc(p.time)}</span>
@@ -658,8 +675,20 @@ function renderList(){
     </div>`;
   }).join('');
   el.querySelectorAll('.post-row').forEach(row => {
-    row.addEventListener('click', () => openPost(row.dataset.id));
+    row.addEventListener('click', () => togglePost(row.dataset.id));
   });
+}
+
+/* 点一下展开、再点一下收起 */
+function togglePost(id){
+  if(state.openPost === id){
+    state.openPost = null;
+    $('#postDetail').innerHTML = '';
+  } else {
+    state.openPost = id;
+    openPost(id);
+  }
+  renderList();
 }
 
 /* ============================================================
@@ -699,21 +728,32 @@ function openPost(id){
       ${puzzleHtml}
     </div>
     <div class="reply-list">${repliesHtml}</div>
-    <button class="back-btn" onclick="renderForum()">← 返回帖子列表</button>
+    <button class="back-btn" onclick="togglePost('${p.id}')">收起 ∧</button>
   `;
 
-  // 逐段打字正文
+  // 正文：首次阅读用打字机，再次展开直接显示
   const tb = $('#threadBody');
-  let i = 0;
-  function nextPara(){
-    if(i < p.body.length){
-      typeText(tb, p.body[i], nextPara);
-      i++;
-    } else {
-      onBodyDone(p);
+  if(state.typed[p.id]){
+    p.body.forEach(html => {
+      const div = document.createElement('div');
+      div.className = 'say';
+      div.innerHTML = html;
+      tb.appendChild(div);
+    });
+    onBodyDone(p);
+  } else {
+    state.typed[p.id] = true;
+    let i = 0;
+    function nextPara(){
+      if(i < p.body.length){
+        typeText(tb, p.body[i], nextPara);
+        i++;
+      } else {
+        onBodyDone(p);
+      }
     }
+    nextPara();
   }
-  nextPara();
 
   // 绑定追问按钮
   detail.querySelectorAll('.ask-btn').forEach(b => {
@@ -732,7 +772,7 @@ function openPost(id){
 function onBodyDone(p){
   if(p.id === 'p3' && state.stage < 2){ showEnding(1); }
   else if(p.id === 'p5' && state.stage < 3){ showEnding(2); }
-  else if(p.id === 'p6'){ showEnding(3); }
+  else if(p.id === 'p6' && !state.finalShown){ state.finalShown = true; showEnding(3); }
 }
 
 /* 关键词谜题：若该帖有谜题、且所需线索已集齐、且目标尚未解锁，则显示输入框 */
@@ -782,8 +822,7 @@ function openDialogue(npcId, nodeOverride){
   if(!npc) return;
   $('#dialogue').classList.add('show');
   $('#dlgName').textContent = '私信 · ' + npc.name;
-  const startNode = nodeOverride || state.npcNode[npcId] || 'start';
-  renderDialogue(npcId, startNode);
+  renderDialogue(npcId, nodeOverride || 'start');
 }
 
 function renderDialogue(npcId, nodeId){
@@ -793,11 +832,27 @@ function renderDialogue(npcId, nodeId){
   const body = $('#dlg-body');
   body.innerHTML = '';
 
+  // 记录已看过的节点；重复进入时直接显示、不再打字机
+  if(!state.visited[npcId]) state.visited[npcId] = {};
+  const already = !!state.visited[npcId][nodeId];
+  state.visited[npcId][nodeId] = true;
+
   if(node.addClue && !state.clues.includes(node.addClue)){
     state.clues.push(node.addClue);
     state.newClues.push(node.addClue);
   }
   renderClues();
+
+  if(already){
+    node.say.forEach(html => {
+      const div = document.createElement('div');
+      div.className = 'say';
+      div.innerHTML = html;
+      body.appendChild(div);
+    });
+    renderOptions(npcId, nodeId, node);
+    return;
+  }
 
   let i = 0;
   function nextSay(){
@@ -805,32 +860,38 @@ function renderDialogue(npcId, nodeId){
       typeText(body, node.say[i], nextSay);
       i++;
     } else {
-      renderOptions(npcId, node);
+      renderOptions(npcId, nodeId, node);
     }
   }
   nextSay();
 }
 
-function renderOptions(npcId, node){
+function renderOptions(npcId, nodeId, node){
   const body = $('#dlg-body');
-  if(!node.opts || node.opts.length === 0){
+  const opts = node.opts || [];
+  if(opts.length === 0){
     body.innerHTML += `<button class="dlg-close" onclick="closeDialogue()">（ 结 束 对 话 ）</button>`;
     return;
   }
   const optsBox = document.createElement('div');
   optsBox.id = 'dlg-options';
-  optsBox.innerHTML = node.opts.map((o,i) =>
-    `<button class="opt-btn" data-i="${i}">${esc(o.t)}</button>`).join('');
+  optsBox.innerHTML = opts.map((o, i) => {
+    const key = npcId + '::' + nodeId + '::' + i;
+    const chosen = !!state.chosenOpts[key];
+    return `<button class="opt-btn${chosen ? ' chosen' : ''}" data-idx="${i}" data-next="${o.next || ''}">${esc(o.t)}</button>`;
+  }).join('');
   body.appendChild(optsBox);
 
   optsBox.querySelectorAll('.opt-btn').forEach(b => {
     b.addEventListener('click', () => {
-      const o = node.opts[+b.dataset.i];
-      if(o.next){
-        state.npcNode[npcId] = o.next;
-        renderDialogue(npcId, o.next);
+      // 标记该选项已选择过（仅灰化表示，不隐藏）
+      state.chosenOpts[npcId + '::' + nodeId + '::' + b.dataset.idx] = true;
+      const next = b.dataset.next;
+      if(next){
+        renderDialogue(npcId, next);
       } else {
-        closeDialogue();
+        // 叶子选项：选完回到最初的选择项
+        renderDialogue(npcId, 'start');
       }
     });
   });
@@ -892,6 +953,7 @@ function continueStage(stage){
    主流程
    ============================================================ */
 function renderForum(){
+  state.openPost = null;
   $('#postDetail').innerHTML = '';
   renderList();
 }
@@ -902,6 +964,14 @@ $('#intro').addEventListener('click', function(){
   this.classList.add('fade');
   setTimeout(()=> this.remove(), 1400);
   renderList();
+});
+
+// 对话弹窗：点击背景空白处，或按 ESC，可中途退出
+$('#dialogue').addEventListener('click', function(e){
+  if(e.target === this) closeDialogue();
+});
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') closeDialogue();
 });
 
 renderList();
